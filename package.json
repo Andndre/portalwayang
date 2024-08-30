@@ -9,9 +9,11 @@
     "build": "vite build",
     "serve-public": "vite && cloudflared tunnel --url http://localhost:5173",
     "preview": "vite preview",
-    "subdir-build" : "vite build --base=/threejs/"
+    "subdir-build": "vite build --base=/threejs/"
   },
   "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "@types/three": "^0.167.2",
     "cloudflared": "^0.4.0",
     "vite": "^4.3.9"
   },
