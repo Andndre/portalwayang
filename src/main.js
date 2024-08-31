@@ -7,10 +7,10 @@ let container, camera, scene, renderer, controller, reticle;
 let hitTestSource = null;
 let hitTestSourceRequested = false;
 let planeFound = false;
-let flowersGltf;
+let ruanganGltf;
 
 /**
- * Checks for WebXR session support and initializes the AR experience if supported.
+ * Memeriksa dukungan sesi WebXR dan menginisialisasi pengalaman AR jika didukung.
  */
 if ("xr" in navigator) {
   navigator.xr.isSessionSupported("immersive-ar").then((supported) => {
@@ -23,7 +23,7 @@ if ("xr" in navigator) {
 }
 
 /**
- * Initializes the AR scene, setting up all necessary components.
+ * Menginisialisasi scene AR, dengan mengatur semua komponen yang diperlukan.
  */
 function initializeScene() {
   setupContainer();
@@ -33,12 +33,12 @@ function initializeScene() {
   setupRenderer();
   setupARButton();
   setupReticle();
-  loadFlowerModel();
+  loadModelRuangan();
   setupEventListeners();
 }
 
 /**
- * Sets up the main container for the AR scene.
+ * Mengatur kontainer utama untuk scene AR.
  */
 function setupContainer() {
   container = document.createElement("div");
@@ -46,14 +46,14 @@ function setupContainer() {
 }
 
 /**
- * Initializes the Three.js scene.
+ * Menginisialisasi scene Three.js.
  */
 function setupScene() {
   scene = new THREE.Scene();
 }
 
 /**
- * Initializes the camera for the AR scene.
+ * Menginisialisasi kamera untuk scene AR.
  */
 function setupCamera() {
   camera = new THREE.PerspectiveCamera(
@@ -65,7 +65,7 @@ function setupCamera() {
 }
 
 /**
- * Sets up lighting for the AR scene.
+ * Mengatur pencahayaan untuk scene AR.
  */
 function setupLighting() {
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
@@ -74,7 +74,7 @@ function setupLighting() {
 }
 
 /**
- * Configures the WebGL renderer and enables XR capabilities.
+ * Mengonfigurasi renderer WebGL dan mengaktifkan kemampuan XR.
  */
 function setupRenderer() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -86,7 +86,7 @@ function setupRenderer() {
 }
 
 /**
- * Adds the AR button to the page, allowing the user to start an AR session.
+ * Menambahkan tombol AR ke halaman, memungkinkan pengguna untuk memulai sesi AR.
  */
 function setupARButton() {
   document.body.appendChild(
@@ -98,7 +98,7 @@ function setupARButton() {
 }
 
 /**
- * Handles AR session start, updating the UI accordingly.
+ * Menangani awal sesi AR, memperbarui UI sesuai.
  */
 function onSessionStart() {
   planeFound = false;
@@ -106,7 +106,7 @@ function onSessionStart() {
 }
 
 /**
- * Sets up the reticle used for hit-testing in the AR scene.
+ * Mengatur reticle yang digunakan untuk hit-testing dalam scene AR.
  */
 function setupReticle() {
   reticle = new THREE.Mesh(
@@ -119,7 +119,7 @@ function setupReticle() {
 }
 
 /**
- * Sets up the AR controller and attaches event listeners for interaction.
+ * Mengatur controller AR dan menambahkan event listener untuk interaksi.
  */
 function setupController() {
   controller = renderer.xr.getController(0);
@@ -128,51 +128,32 @@ function setupController() {
 }
 
 /**
- * Handles the selection event, adding a flower model to the scene at the reticle position.
+ * Menangani event seleksi, menambahkan model bunga ke scene di posisi reticle.
  */
 function onSelect() {
-  if (!reticle.visible || !flowersGltf) return;
+  if (!reticle.visible || !ruanganGltf) return;
 
   const flower =
-    flowersGltf.children[Math.floor(Math.random() * flowersGltf.children.length)];
+    ruanganGltf.children[Math.floor(Math.random() * ruanganGltf.children.length)];
   const mesh = flower.clone();
 
   reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-  const scale = Math.random() * 0.4 + 0.25;
-  mesh.scale.set(scale, scale, scale);
-  mesh.rotateY(Math.random() * Math.PI * 2);
   scene.add(mesh);
-
-  animateGrowth(mesh);
 }
 
 /**
- * Animates the growth of the added flower mesh.
- * @param {THREE.Mesh} mesh - The flower mesh to animate.
+ * Memuat model 3D model dari file GLTF.
  */
-function animateGrowth(mesh) {
-  const interval = setInterval(() => {
-    mesh.scale.multiplyScalar(1.01);
-    mesh.rotateY(0.03);
-  }, 16);
-
-  setTimeout(() => {
-    clearInterval(interval);
-  }, 500);
-}
-
-/**
- * Loads the 3D model of flowers from a GLTF file.
- */
-function loadFlowerModel() {
+function loadModelRuangan() {
   const loader = new GLTFLoader();
-  loader.load("flowers.glb", (gltf) => {
-    flowersGltf = gltf.scene;
+  loader.load("ruangan.glb", (gltf) => {
+    console.log(gltf);
+    ruanganGltf = gltf.scene;
   });
 }
 
 /**
- * Sets up the necessary event listeners for the AR experience.
+ * Mengatur event listener yang diperlukan untuk pengalaman AR.
  */
 function setupEventListeners() {
   setupController();
@@ -180,7 +161,7 @@ function setupEventListeners() {
 }
 
 /**
- * Handles the window resize event to adjust the camera and renderer.
+ * Menangani event resize window untuk menyesuaikan kamera dan renderer.
  */
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -189,16 +170,16 @@ function onWindowResize() {
 }
 
 /**
- * Starts the animation loop.
+ * Memulai loop animasi.
  */
 function animate() {
   renderer.setAnimationLoop(render);
 }
 
 /**
- * Renders the AR scene, handling hit-testing and reticle visibility.
- * @param {DOMHighResTimeStamp} timestamp - The current time for the animation frame.
- * @param {XRFrame} frame - The current XR frame for hit-testing.
+ * Merender scene AR, menangani hit-testing dan visibilitas reticle.
+ * @param {DOMHighResTimeStamp} timestamp - Waktu saat ini untuk frame animasi.
+ * @param {XRFrame} frame - Frame XR saat ini untuk hit-testing.
  */
 function render(timestamp, frame) {
   if (frame) {
@@ -219,9 +200,9 @@ function render(timestamp, frame) {
 }
 
 /**
- * Requests a hit-test source for detecting planes in the AR session.
- * @param {XRSession} session - The current XR session.
- * @param {XRReferenceSpace} referenceSpace - The reference space used for hit-testing.
+ * Meminta sumber hit-test untuk mendeteksi plane dalam sesi AR.
+ * @param {XRSession} session - Sesi XR saat ini.
+ * @param {XRReferenceSpace} referenceSpace - Ruang referensi yang digunakan untuk hit-testing.
  */
 function requestHitTestSource(session, referenceSpace) {
   session.requestReferenceSpace("viewer").then((viewerSpace) => {
@@ -239,11 +220,13 @@ function requestHitTestSource(session, referenceSpace) {
 }
 
 /**
- * Handles hit-test results, updating the reticle's position and visibility.
- * @param {XRHitTestResult[]} hitTestResults - The array of hit-test results.
- * @param {XRReferenceSpace} referenceSpace - The reference space used for hit-testing.
+ * Menangani hasil hit-test, memperbarui posisi dan visibilitas reticle.
+ * @param {XRHitTestResult[]} hitTestResults - Array hasil hit-test.
+ * @param {XRReferenceSpace} referenceSpace - Ruang referensi yang digunakan untuk hit-testing.
  */
 function handleHitTestResults(hitTestResults, referenceSpace) {
+  // Selama belum ditemukan plane ground, tampilkan tracking-prompt
+  // Jika ditemukan, hilangkan tracking-prompt dan tampilkan instructions
   if (hitTestResults.length > 0) {
     if (!planeFound) {
       planeFound = true;
