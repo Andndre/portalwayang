@@ -213,6 +213,9 @@ async function main() {
   model.scale.set(0.01, 0.01, 0.01);
   model.visible = false;
   const plane = model.getObjectByName("plane");
+  const tembok = model.getObjectByName("tembok");
+  // double sided
+  tembok.material.side = THREE.DoubleSide;
   const textureLoader = new THREE.TextureLoader();
   const texture = await textureLoader.loadAsync(
     "wayang-kamasan.jpg",
