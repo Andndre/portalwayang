@@ -1,243 +1,233 @@
+"use strict";
+
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
+import { checkXRSupport } from "./util";
 import "./style.css";
 
-let container, camera, scene, renderer, controller, reticle;
-let hitTestSource = null;
-let hitTestSourceRequested = false;
-let planeFound = false;
-let ruanganGltf;
+// Kelas yang mengelola semua yang terkait dengan scene
+class SceneManager {
+  /**
+   * Inisialisasi semua komponen scene dan menyambungkan ke renderer
+   *
+   * @param {THREE.WebGLRenderer} renderer - Renderer yang digunakan untuk scene
+   */
+  constructor(renderer) {
+    // Inisialisasi semua komponen scene langsung di constructor
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(
+      70,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      20
+    );
+    this.reticle = new THREE.Mesh(
+      new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial()
+    );
+    this.reticle.matrixAutoUpdate = false;
+    this.reticle.visible = false;
+    this.scene.add(this.reticle);
 
-/**
- * Memeriksa dukungan sesi WebXR dan menginisialisasi pengalaman AR jika didukung.
- */
-if ("xr" in navigator) {
-  navigator.xr.isSessionSupported("immersive-ar").then((supported) => {
-    if (supported) {
-      document.getElementById("ar-not-supported").style.display = "none";
-      initializeScene();
-      animate();
-    }
-  });
-}
+    this.planeFound = false;
 
-/**
- * Menginisialisasi scene AR, dengan mengatur semua komponen yang diperlukan.
- */
-function initializeScene() {
-  setupContainer();
-  setupScene();
-  setupCamera();
-  setupLighting();
-  setupRenderer();
-  setupARButton();
-  setupReticle();
-  loadModelRuangan();
-  setupEventListeners();
-}
+    // Setup Lighting
+    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+    light.position.set(0.5, 1, 0.25);
+    this.scene.add(light);
 
-/**
- * Mengatur kontainer utama untuk scene AR.
- */
-function setupContainer() {
-  container = document.createElement("div");
-  document.body.appendChild(container);
-}
+    // Setup XR controller from the renderer
+    this.controller = renderer.xr.getController(0);
+    this.scene.add(this.controller);
 
-/**
- * Menginisialisasi scene Three.js.
- */
-function setupScene() {
-  scene = new THREE.Scene();
-}
-
-/**
- * Menginisialisasi kamera untuk scene AR.
- */
-function setupCamera() {
-  camera = new THREE.PerspectiveCamera(
-    70,
-    window.innerWidth / window.innerHeight,
-    0.01,
-    20
-  );
-}
-
-/**
- * Mengatur pencahayaan untuk scene AR.
- */
-function setupLighting() {
-  const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-  light.position.set(0.5, 1, 0.25);
-  scene.add(light);
-}
-
-/**
- * Mengonfigurasi renderer WebGL dan mengaktifkan kemampuan XR.
- */
-function setupRenderer() {
-  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true;
-  container.appendChild(renderer.domElement);
-  renderer.xr.addEventListener("sessionstart", onSessionStart);
-}
-
-/**
- * Menambahkan tombol AR ke halaman, memungkinkan pengguna untuk memulai sesi AR.
- */
-function setupARButton() {
-  document.body.appendChild(
-    ARButton.createButton(renderer, {
-      requiredFeatures: ["local", "hit-test", "dom-overlay"],
-      domOverlay: { root: document.querySelector("#overlay") },
-    })
-  );
-}
-
-/**
- * Menangani awal sesi AR, memperbarui UI sesuai.
- */
-function onSessionStart() {
-  planeFound = false;
-  document.getElementById("tracking-prompt").style.display = "block";
-}
-
-/**
- * Mengatur reticle yang digunakan untuk hit-testing dalam scene AR.
- */
-function setupReticle() {
-  reticle = new THREE.Mesh(
-    new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
-    new THREE.MeshBasicMaterial()
-  );
-  reticle.matrixAutoUpdate = false;
-  reticle.visible = false;
-  scene.add(reticle);
-}
-
-/**
- * Mengatur controller AR dan menambahkan event listener untuk interaksi.
- */
-function setupController() {
-  controller = renderer.xr.getController(0);
-  controller.addEventListener("select", onSelect);
-  scene.add(controller);
-}
-
-/**
- * Menangani event seleksi, menambahkan model bunga ke scene di posisi reticle.
- */
-function onSelect() {
-  if (!reticle.visible || !ruanganGltf) return;
-
-  const flower =
-    ruanganGltf.children[Math.floor(Math.random() * ruanganGltf.children.length)];
-  const mesh = flower.clone();
-
-  reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-  scene.add(mesh);
-}
-
-/**
- * Memuat model 3D model dari file GLTF.
- */
-function loadModelRuangan() {
-  const loader = new GLTFLoader();
-  loader.load("ruangan.glb", (gltf) => {
-    console.log(gltf);
-    ruanganGltf = gltf.scene;
-  });
-}
-
-/**
- * Mengatur event listener yang diperlukan untuk pengalaman AR.
- */
-function setupEventListeners() {
-  setupController();
-  window.addEventListener("resize", onWindowResize);
-}
-
-/**
- * Menangani event resize window untuk menyesuaikan kamera dan renderer.
- */
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-/**
- * Memulai loop animasi.
- */
-function animate() {
-  renderer.setAnimationLoop(render);
-}
-
-/**
- * Merender scene AR, menangani hit-testing dan visibilitas reticle.
- * @param {DOMHighResTimeStamp} timestamp - Waktu saat ini untuk frame animasi.
- * @param {XRFrame} frame - Frame XR saat ini untuk hit-testing.
- */
-function render(timestamp, frame) {
-  if (frame) {
-    const referenceSpace = renderer.xr.getReferenceSpace();
-    const session = renderer.xr.getSession();
-
-    if (!hitTestSourceRequested) {
-      requestHitTestSource(session, referenceSpace);
-    }
-
-    if (hitTestSource) {
-      const hitTestResults = frame.getHitTestResults(hitTestSource);
-      handleHitTestResults(hitTestResults, referenceSpace);
-    }
+    // Event listener untuk perubahan ukuran window
+    window.addEventListener("resize", this.onWindowResize.bind(this));
   }
 
-  renderer.render(scene, camera);
-}
+  /**
+   * A callback function type for tracking loading progress.
+   * @callback OnSelect
+   * @param {THREE.Matrix4} matrix - The progress event object.
+   */
 
-/**
- * Meminta sumber hit-test untuk mendeteksi plane dalam sesi AR.
- * @param {XRSession} session - Sesi XR saat ini.
- * @param {XRReferenceSpace} referenceSpace - Ruang referensi yang digunakan untuk hit-testing.
- */
-function requestHitTestSource(session, referenceSpace) {
-  session.requestReferenceSpace("viewer").then((viewerSpace) => {
-    session.requestHitTestSource({ space: viewerSpace }).then((source) => {
-      hitTestSource = source;
+  /**
+   * Sets the function to be called when the XR controller is selected.
+   *
+   * @param {OnSelect} onSelect - The function to be called when the XR controller
+   * is selected. The function is called with the current matrix of the reticle as
+   * the argument.
+   */
+  setOnSelect(onSelect) {
+    this.controller.addEventListener("select", () => {
+      if (this.reticle.visible) onSelect(this.reticle.matrix);
     });
-  });
+  }
 
-  session.addEventListener("end", () => {
-    hitTestSourceRequested = false;
-    hitTestSource = null;
-  });
-
-  hitTestSourceRequested = true;
-}
-
-/**
- * Menangani hasil hit-test, memperbarui posisi dan visibilitas reticle.
- * @param {XRHitTestResult[]} hitTestResults - Array hasil hit-test.
- * @param {XRReferenceSpace} referenceSpace - Ruang referensi yang digunakan untuk hit-testing.
- */
-function handleHitTestResults(hitTestResults, referenceSpace) {
-  // Selama belum ditemukan plane ground, tampilkan tracking-prompt
-  // Jika ditemukan, hilangkan tracking-prompt dan tampilkan instructions
-  if (hitTestResults.length > 0) {
-    if (!planeFound) {
-      planeFound = true;
-      document.getElementById("tracking-prompt").style.display = "none";
-      document.getElementById("instructions").style.display = "flex";
-    }
-
-    const hit = hitTestResults[0];
-    reticle.visible = true;
-    reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-  } else {
-    reticle.visible = false;
+  // Menangani perubahan ukuran window
+  onWindowResize() {
+    this.camera.aspect = window.innerWidth / window.innerHeight;
+    this.camera.updateProjectionMatrix();
   }
 }
+
+// Kelas yang mengelola renderer dan interaksi XR
+class RendererManager {
+  constructor() {
+    // Inisialisasi renderer dan mengaktifkan XR langsung di constructor
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.renderer.xr.enabled = true;
+    document.body.appendChild(this.renderer.domElement);
+
+    this.hitTestSource = null;
+    this.hitTestSourceRequested = false;
+
+    // Event listener untuk XR session start
+    this.renderer.xr.addEventListener(
+      "sessionstart",
+      this.onSessionStart.bind(this)
+    );
+  }
+
+  // Menangani event saat sesi XR dimulai
+  onSessionStart() {
+    document.getElementById("tracking-prompt").style.display = "block";
+  }
+
+  // Memulai animasi scene
+  animate(sceneManager) {
+    this.renderer.setAnimationLoop((timestamp, frame) =>
+      this.render(timestamp, frame, sceneManager)
+    );
+  }
+
+  // Merender scene AR dan menangani hit-test
+  render(timestamp, frame, sceneManager) {
+    if (frame) {
+      const referenceSpace = this.renderer.xr.getReferenceSpace();
+      const session = this.renderer.xr.getSession();
+
+      if (!this.hitTestSourceRequested) {
+        this.requestHitTestSource(session, referenceSpace);
+      }
+
+      if (this.hitTestSource) {
+        const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+        this.handleHitTestResults(hitTestResults, referenceSpace, sceneManager);
+      }
+    }
+
+    this.renderer.render(sceneManager.scene, sceneManager.camera);
+  }
+
+  // Meminta sumber hit-test untuk AR
+  requestHitTestSource(session, referenceSpace) {
+    session.requestReferenceSpace("viewer").then((viewerSpace) => {
+      session.requestHitTestSource({ space: viewerSpace }).then((source) => {
+        this.hitTestSource = source;
+      });
+    });
+
+    session.addEventListener("end", () => {
+      this.hitTestSourceRequested = false;
+      this.hitTestSource = null;
+    });
+
+    this.hitTestSourceRequested = true;
+  }
+
+  // Menangani hasil hit-test
+  handleHitTestResults(hitTestResults, referenceSpace, sceneManager) {
+    if (hitTestResults.length > 0) {
+      if (!sceneManager.planeFound) {
+        sceneManager.planeFound = true;
+        document.getElementById("tracking-prompt").style.display = "none";
+        document.getElementById("instructions").style.display = "flex";
+      }
+
+      const hit = hitTestResults[0];
+      sceneManager.reticle.visible = true;
+      sceneManager.reticle.matrix.fromArray(
+        hit.getPose(referenceSpace).transform.matrix
+      );
+    } else {
+      sceneManager.reticle.visible = false;
+    }
+  }
+}
+
+// Kelas yang mengelola pemuatan model 3D
+class ModelLoader {
+  static loader = new GLTFLoader();
+  /**
+   * A callback function type for tracking loading progress.
+   * @callback OnProgress
+   * @param {ProgressEvent} event - The progress event object.
+   */
+  // Menganimasi pertumbuhan mesh bunga
+  /**
+   * 
+   * @param {string} name 
+   * @param {OnProgress} onProgress 
+   * @returns 
+   */
+  static async loadModel(name, onProgress) {
+    const model = await this.loader.loadAsync(name, onProgress);
+    return model.scenes[0];
+  }
+}
+
+// Kelas yang mengelola UI dan tombol AR
+class UIManager {
+  constructor(renderer) {
+    // Mengatur tombol AR langsung di constructor
+    document.body.appendChild(
+      ARButton.createButton(renderer, {
+        requiredFeatures: ["local", "hit-test", "dom-overlay"],
+        domOverlay: { root: document.querySelector("#overlay") },
+      })
+    );
+  }
+}
+
+// Fungsi utama untuk menjalankan aplikasi
+async function main() {
+  const ARSupported = await checkXRSupport();
+  if (!ARSupported) {
+    document.getElementById("ar-not-supported").style.display = "block";
+    return;
+  }
+  const rendererManager = new RendererManager();
+  const sceneManager = new SceneManager(rendererManager.renderer);
+  new UIManager(rendererManager.renderer);
+  const model = await ModelLoader.loadModel(
+    "ruangan.glb",
+    (event) => console.log(event)
+  );
+  sceneManager.scene.add(model);
+  model.scale.set(0.01, 0.01, 0.01);
+  model.visible = false;
+  const plane = model.getObjectByName("plane");
+  const red = model.getObjectByName("red");
+  console.log("red", red);
+  red.material.colorWrite = false;
+  red.renderOrder = -1;
+  console.log(plane);
+
+  sceneManager.setOnSelect((matrix) => {
+    console.log("On Select")
+    matrix.decompose(model.position, model.quaternion, model.scale);
+    // rotate the ruangan to face the scene.camera (y-axis)
+    const camera = sceneManager.camera;
+    const target = new THREE.Vector3();
+    camera.getWorldPosition(target);
+    model.lookAt(target);
+    model.visible = true;
+  })
+
+  rendererManager.animate(sceneManager);
+}
+
+main();

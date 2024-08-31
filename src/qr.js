@@ -1,3 +1,5 @@
+"use strict";
+
 import QRCode from "qrcode";
 
 async function generateQRCode(text) {
