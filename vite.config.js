@@ -10,4 +10,5 @@ export default {
     outDir: "../build",
   },
   publicDir: "../public",
+  base: './'
 };
