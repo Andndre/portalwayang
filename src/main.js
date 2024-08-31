@@ -210,16 +210,23 @@ async function main() {
   model.scale.set(0.01, 0.01, 0.01);
   model.visible = false;
   const plane = model.getObjectByName("plane");
-  const red = model.getObjectByName("red");
-  console.log("red", red);
-  red.material.colorWrite = false;
-  red.renderOrder = -1;
+  const textureLoader = new THREE.TextureLoader();
+  const texture = await textureLoader.loadAsync(
+    "wayang-kamasan.jpg",
+  );
+  const aspectRatio = texture.image.width / texture.image.height;
+  plane.scale.set(1, aspectRatio, 1);
+  plane.material.map = texture;
+  const mask = model.getObjectByName("mask");
+  console.log("red", mask);
+  mask.material.colorWrite = false;
+  mask.renderOrder = -1;
   console.log(plane);
 
   sceneManager.setOnSelect((matrix) => {
     console.log("On Select")
     matrix.decompose(model.position, model.quaternion, model.scale);
-    // rotate the ruangan to face the scene.camera (y-axis)
+    // rotate the ruangan to face the sceneManager.camera (y-axis)
     const camera = sceneManager.camera;
     const target = new THREE.Vector3();
     camera.getWorldPosition(target);
