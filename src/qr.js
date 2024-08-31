@@ -19,13 +19,15 @@ async function generateLaunchCode() {
   console.log("Launch Code Generated");
 }
 
-//If we have a valid Variant Launch SDK, we can generate a Launch Code. This will allow iOS users to jump right into the app without having to visit the Launch Card page.
-window.addEventListener("vlaunch-initialized", (e) => {
-  generateLaunchCode();
-});
-
-if (VLaunch.initialized) {
-  generateLaunchCode(); // generate a Launch Code for this url
-} else {
-  generateQRCode(window.location.href); // generate regular QR code for this url
-}
+export function variantLaunch() {  
+  //If we have a valid Variant Launch SDK, we can generate a Launch Code. This will allow iOS users to jump right into the app without having to visit the Launch Card page.
+  window.addEventListener("vlaunch-initialized", (e) => {
+    generateLaunchCode();
+  });
+  
+  if (VLaunch.initialized) {
+    generateLaunchCode(); // generate a Launch Code for this url
+  } else {
+    generateQRCode(window.location.href); // generate regular QR code for this url
+  }
+} 

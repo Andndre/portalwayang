@@ -5,6 +5,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import { checkXRSupport } from "./util";
 import "./style.css";
+import { variantLaunch } from "./qr"
 
 // Kelas yang mengelola semua yang terkait dengan scene
 class SceneManager {
@@ -196,9 +197,11 @@ class UIManager {
 async function main() {
   const ARSupported = await checkXRSupport();
   if (!ARSupported) {
+    variantLaunch();
     document.getElementById("ar-not-supported").style.display = "block";
     return;
   }
+  document.getElementById("ar-not-supported").style.display = "none";
   const rendererManager = new RendererManager();
   const sceneManager = new SceneManager(rendererManager.renderer);
   new UIManager(rendererManager.renderer);
