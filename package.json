@@ -12,7 +12,7 @@
     "preview": "vite preview",
     "subdir-build": "vite build --base=/threejs/",
     "predeploy" : "npm run build",
-    "deploy" : "gh-pages -d build"
+    "deploy" : "npm run build && gh-pages -d build"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
