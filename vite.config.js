@@ -8,6 +8,7 @@ export default {
   root: "src",
   build: {
     outDir: "../build",
+    chunkSizeWarningLimit: 1600
   },
   publicDir: "../public",
   base: './'
