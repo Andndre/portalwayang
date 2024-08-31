@@ -2,6 +2,7 @@
   "name": "launch-examples-threejs",
   "private": false,
   "license": "MIT",
+  "homepage": "https://andndre.github.io/portalwayang/",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -9,12 +10,15 @@
     "build": "vite build",
     "serve-public": "vite && cloudflared tunnel --url http://localhost:5173",
     "preview": "vite preview",
-    "subdir-build": "vite build --base=/threejs/"
+    "subdir-build": "vite build --base=/threejs/",
+    "predeploy" : "npm run build",
+    "deploy" : "gh-pages -d build"
   },
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
     "@types/three": "^0.167.2",
     "cloudflared": "^0.4.0",
+    "gh-pages": "^6.1.1",
     "vite": "^4.3.9"
   },
   "dependencies": {
