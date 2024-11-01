@@ -280,6 +280,7 @@ function onClick(event) {
   if (intersects.length > 0) {
     const clickedPlane = intersects[0].object;
     console.log('Clicked on:', clickedPlane.name);
+    alert('Clicked on: ' + clickedPlane.name);
     // Perform any specific action for each "lukisan" here
   }
 }
