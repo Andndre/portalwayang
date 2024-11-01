@@ -31,7 +31,7 @@ h1 {
   line-height: 1.1;
 }
 
-#overlay{
+#overlay {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -40,7 +40,7 @@ h1 {
   align-items: center;
 }
 
-#instructions{
+#instructions {
   margin: auto;
   flex-grow: 1;
   display: none;
@@ -59,23 +59,32 @@ h1 {
   justify-content: center;
   margin: auto;
   text-align: center;
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 15;
-  
+  gap: 1rem;
 }
 
 @keyframes circle {
-  from { transform: translateX(-50%) rotate(0deg) translateX(50px) rotate(0deg); }
-  to   { transform: translateX(-50%) rotate(360deg) translateX(50px) rotate(-360deg); }
+  from {
+      transform: translateX(-50%) rotate(0deg) translateX(50px) rotate(0deg);
+  }
+  to {
+      transform: translateX(-50%) rotate(360deg) translateX(50px)
+          rotate(-360deg);
+  }
 }
 
 @keyframes elongate {
-  from { transform: translateX(100px); }
-  to   { transform: translateX(-100px); }
+  from {
+      transform: translateX(100px);
+  }
+  to {
+      transform: translateX(-100px);
+  }
 }
 
 #tracking-prompt {
@@ -86,19 +95,19 @@ h1 {
   display: none;
 }
 
-
- #tracking-prompt > img {
+#tracking-prompt > img {
   animation: circle 4s linear infinite;
 }
 
-#qr-code{
+#qr-code {
   border-radius: 0.5rem;
-  box-shadow: 0 0 0 0.3rem rgba(0, 0, 0, 0.1), 0 0.3rem 0.6rem rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 0 0.3rem rgba(0, 0, 0, 0.1),
+      0 0.3rem 0.6rem rgba(0, 0, 0, 0.2);
   margin-top: 2rem;
 }
 
 #ar-not-supported {
-  width:100%
+  width: 100%;
 }
 
 #variant-logo {
@@ -106,16 +115,35 @@ h1 {
 }
 
 canvas {
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  bottom:0;
-  width:100%;
-  height:100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   z-index: 1;
 }
 
-.xr-button-overlay{
+.xr-button-overlay {
   z-index: 100 !important;
+}
+
+
+#loading-container {
+  width: 80%;
+  background-color: #ccc;
+  height: 10px;
+  display: none;
+  border-radius: 10px;
+  max-width: 400px;
+}
+
+#loading-bar {
+  width: 0;
+  height: 100%;
+  background-color: #e38d58;
+  transition: width 0.2s;
+  border-radius: 10px;
+  max-width: 400px;
 }

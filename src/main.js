@@ -2,6 +2,7 @@
 
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import { checkXRSupport } from "./util";
 import "./style.css";
@@ -21,7 +22,7 @@ class SceneManager {
       70,
       window.innerWidth / window.innerHeight,
       0.01,
-      20
+      999
     );
     this.reticle = new THREE.Mesh(
       new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
@@ -162,6 +163,7 @@ class RendererManager {
 // Kelas yang mengelola pemuatan model 3D
 class ModelLoader {
   static loader = new GLTFLoader();
+  static dracoLoader = new DRACOLoader();
   /**
    * A callback function type for tracking loading progress.
    * @callback OnProgress
@@ -175,6 +177,9 @@ class ModelLoader {
    * @returns 
    */
   static async loadModel(name, onProgress) {
+    this.dracoLoader.setDecoderConfig({ type: "js" });
+    this.dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+    this.loader.setDRACOLoader(this.dracoLoader);
     const model = await this.loader.loadAsync(name, onProgress);
     return model.scenes[0];
   }
@@ -201,36 +206,85 @@ async function main() {
     document.getElementById("ar-not-supported").style.display = "block";
     return;
   }
+
   document.getElementById("ar-not-supported").style.display = "none";
   const rendererManager = new RendererManager();
   const sceneManager = new SceneManager(rendererManager.renderer);
-  new UIManager(rendererManager.renderer);
   const model = await ModelLoader.loadModel(
-    "ruangan.glb",
-    (event) => console.log(event)
+    "ruangan newcil1_4.0.glb",
+    (event) => {
+      const progress = (event.loaded / event.total) * 100;
+      document.getElementById("loading-container").style.display = "block";
+      document.getElementById("loading-bar").style.width = `${progress}%`;
+      if (progress === 100) {
+        new UIManager(rendererManager.renderer);
+      }
+    }
   );
+  const raycaster = new THREE.Raycaster();
   sceneManager.scene.add(model);
   model.scale.set(0.01, 0.01, 0.01);
   model.visible = false;
-  const plane = model.getObjectByName("plane");
-  const tembok = model.getObjectByName("tembok");
-  // double sided
-  tembok.material.side = THREE.DoubleSide;
-  const textureLoader = new THREE.TextureLoader();
-  const texture = await textureLoader.loadAsync(
-    "wayang-kamasan.jpg",
-  );
-  const aspectRatio = texture.image.width / texture.image.height;
-  plane.scale.set(1, aspectRatio, 1);
-  plane.material.map = texture;
+  
+  // const plane = model.getObjectByName("plane");
+  // const tembok = model.getObjectByName("tembok");
+  // // double sided
+  // tembok.material.side = THREE.DoubleSide;
+  // console.log(tembok);
+  // const textureLoader = new THREE.TextureLoader();
+  // const texture = await textureLoader.loadAsync(
+  //   "wayang-kamasan.jpg",
+  // );
+  // const aspectRatio = texture.image.width / texture.image.height;
+  // plane.scale.set(1, aspectRatio, 1);
+  // plane.material.map = texture;
   const mask = model.getObjectByName("mask");
   console.log("red", mask);
   mask.material.colorWrite = false;
   mask.renderOrder = -1;
-  console.log(plane);
+  // console.log(plane);
+
+  const planes = [
+    'lukisan-demo',
+    'lukisan-2',
+    'lukisan-3',
+    'lukisan-4',
+    'lukisan-5',
+  ]
+
+  var lukisans = [
+    "wayang-kamasan.jpg"
+  ]
+
+  for (let i = 0; i < lukisans.length; i++) {
+      const lukisan = lukisans[i];
+      const plane = model.getObjectByName(planes[i]);
+      const textureLoader = new THREE.TextureLoader();
+      const texture = await textureLoader.loadAsync(lukisan);
+      plane.material.map = texture;
+  }
+
+  // Function to handle click events
+function onClick(event) {
+  console.log('clicked');
+  // Convert mouse position to normalized device coordinates
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Update the raycaster with the camera and mouse position
+  raycaster.setFromCamera(mouse, sceneManager.camera);
+
+  // Get all objects the raycaster intersects
+  const intersects = raycaster.intersectObjects(planes.map(name => model.getObjectByName(name)));
+
+  if (intersects.length > 0) {
+    const clickedPlane = intersects[0].object;
+    console.log('Clicked on:', clickedPlane.name);
+    // Perform any specific action for each "lukisan" here
+  }
+}
 
   sceneManager.setOnSelect((matrix) => {
-    console.log("On Select")
     matrix.decompose(model.position, model.quaternion, model.scale);
     // rotate the ruangan to face the sceneManager.camera (y-axis)
     const camera = sceneManager.camera;
@@ -238,7 +292,9 @@ async function main() {
     camera.getWorldPosition(target);
     model.lookAt(target);
     model.visible = true;
-  })
+  });
+
+  rendererManager.renderer.domElement.addEventListener('click', onClick);
 
   rendererManager.animate(sceneManager);
 }
