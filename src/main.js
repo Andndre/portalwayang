@@ -190,8 +190,6 @@ async function main() {
 
   var lukisans = ["wayang-kamasan.jpg"];
 
-  var domEvents	= new THREEx.DomEvents(sceneManager.camera, rendererManager.renderer.domElement);
-
   const planesObject = [];
 
   for (let i = 0; i < lukisans.length; i++) {
@@ -207,9 +205,6 @@ async function main() {
       plane.material.map = texture;
       plane.geometry.computeBoundingBox();
       plane.updateMatrixWorld(true);
-      // domEvents.addEventListener(plane, "click", () => {
-      //   alert("Lukisan telah dipilih");
-      // });
       plane.rotation.y = 0;
       console.log(plane);
       console.log(domEvents);
