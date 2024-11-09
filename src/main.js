@@ -7,10 +7,6 @@ import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
 import { checkXRSupport } from "./util";
 import "./style.css";
 import { variantLaunch } from "./qr";
-import { THREEx } from "./treex.dovements"
-
-const planes = ["lukisan-demo", "lukisan-2", "lukisan-3", "lukisan-4", "lukisan-5"];
-var lukisans = ["wayang-kamasan.jpg"];
 
 class SceneManager {
   constructor(renderer) {
