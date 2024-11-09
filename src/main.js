@@ -206,8 +206,6 @@ async function main() {
       plane.geometry.computeBoundingBox();
       plane.updateMatrixWorld(true);
       plane.rotation.y = 0;
-      console.log(plane);
-      console.log(domEvents);
     }
   }
 
