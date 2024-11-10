@@ -8,6 +8,35 @@ import { checkXRSupport } from "./util";
 import "./style.css";
 import { variantLaunch } from "./qr";
 
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const planes = ["lukisan-demo", "lukisan-2", "lukisan-3", "lukisan-4", "lukisan-5"];
+
+/**
+ * Handles the click event on the scene and changes the color of the intersected object if it is in the planes array.
+ *
+ * @param {MouseEvent} event - The mouse event triggered by the click.
+ * @param {THREE.Camera} camera - The camera used to render the scene.
+ * @param {THREE.Scene} scene - The scene containing the objects to be intersected.
+ */
+function onClick(event, camera, scene) {
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    const intersectedObject = intersects[0].object;
+
+    if (planes.includes(intersectedObject.name)) {
+      console.log('Object clicked:', intersectedObject);
+      intersectedObject.material.color.set(0xff0000);
+    }
+  }
+}
+
 class SceneManager {
   constructor(renderer) {
     this.scene = new THREE.Scene();
@@ -38,6 +67,7 @@ class SceneManager {
     this.scene.add(this.controller);
 
     window.addEventListener("resize", this.onWindowResize.bind(this));
+    window.addEventListener('click', (event) => onClick(event, this.camera, this.scene), false);
   }
 
   setOnSelect(onSelect) {
@@ -52,7 +82,14 @@ class SceneManager {
   }
 }
 
+/**
+ * Manages the rendering process and XR session for the application.
+ */
 class RendererManager {
+  /**
+   * Creates an instance of RendererManager.
+   * Initializes the WebGLRenderer and sets up XR session event listeners.
+   */
   constructor() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -69,16 +106,31 @@ class RendererManager {
     );
   }
 
+  /**
+   * Handles the start of an XR session.
+   * Displays the tracking prompt.
+   */
   onSessionStart() {
     document.getElementById("tracking-prompt").style.display = "block";
   }
 
+  /**
+   * Starts the animation loop for rendering.
+   * @param {Object} sceneManager - The scene manager containing the scene and camera.
+   */
   animate(sceneManager) {
     this.renderer.setAnimationLoop((timestamp, frame) =>
       this.render(timestamp, frame, sceneManager)
     );
   }
 
+  /**
+   * Renders the scene for each frame.
+   * Handles hit test source requests and hit test results.
+   * @param {number} timestamp - The current timestamp.
+   * @param {XRFrame} frame - The current XR frame.
+   * @param {Object} sceneManager - The scene manager containing the scene and camera.
+   */
   render(timestamp, frame, sceneManager) {
     if (frame) {
       const referenceSpace = this.renderer.xr.getReferenceSpace();
@@ -97,6 +149,11 @@ class RendererManager {
     this.renderer.render(sceneManager.scene, sceneManager.camera);
   }
 
+  /**
+   * Requests a hit test source for the XR session.
+   * @param {XRSession} session - The current XR session.
+   * @param {XRReferenceSpace} referenceSpace - The reference space for the XR session.
+   */
   requestHitTestSource(session, referenceSpace) {
     session.requestReferenceSpace("viewer").then((viewerSpace) => {
       session.requestHitTestSource({ space: viewerSpace }).then((source) => {
@@ -112,6 +169,13 @@ class RendererManager {
     this.hitTestSourceRequested = true;
   }
 
+  /**
+   * Handles the results of a hit test.
+   * Updates the visibility and position of the reticle based on hit test results.
+   * @param {Array<XRHitTestResult>} hitTestResults - The results of the hit test.
+   * @param {XRReferenceSpace} referenceSpace - The reference space for the XR session.
+   * @param {Object} sceneManager - The scene manager containing the scene and camera.
+   */
   handleHitTestResults(hitTestResults, referenceSpace, sceneManager) {
     if (sceneManager.placed) {
       return;
@@ -186,7 +250,6 @@ async function main() {
 
   model.scale.set(0.01, 0.01, 0.01);
   model.visible = false;
-  const planes = ["lukisan-demo", "lukisan-2", "lukisan-3", "lukisan-4", "lukisan-5"];
 
   var lukisans = ["wayang-kamasan.jpg"];
 
@@ -212,40 +275,8 @@ async function main() {
   sceneManager.scene.add(model);
   sceneManager.model = model;
 
-  // Create a raycaster
-  const raycaster = new THREE.Raycaster();
-  
-  // Create a vector to store the mouse position
-  const mouse = new THREE.Vector2();
-  
-  // Add an event listener for the mouse click
-  document.addEventListener('click', (event) => {
-    // Get the mouse position
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  
-    // Update the raycaster
-    raycaster.setFromCamera(mouse, sceneManager.camera);
-  
-    // Get the intersections
-    const intersects = raycaster.intersectObjects(planesObject);
-  
-    // Check if the plane was clicked
-    if (intersects.length > 0) {
-      // Get the intersection point
-      const intersection = intersects[0];
-      alert("Lukisan telah dipilih");
-  
-      // Check if the intersection point is on the plane
-      // if (intersection.object === plane) {
-      //   // Handle the click event
-      // }
-    }
-  });
-
   sceneManager.setOnSelect((matrix) => {
     if (model.visible) return;
-    console.log(matrix);
     matrix.decompose(model.position, model.quaternion, model.scale);
 
     const targetPosition = new THREE.Vector3();
