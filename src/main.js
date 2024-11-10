@@ -24,7 +24,7 @@ function onClick(event, camera, scene) {
   mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
   raycaster.setFromCamera(mouse, camera);
-  
+
   const intersects = raycaster.intersectObjects(scene.children, true);
 
   if (intersects.length > 0) {
@@ -55,6 +55,10 @@ class SceneManager {
     this.reticle.visible = false;
     this.scene.add(this.reticle);
 
+    /**
+     * The model to be placed in the scene.
+     * @type {THREE.Object3D | null}
+     */
     this.model = null;
     this.planeFound = false;
     this.placed = false;
